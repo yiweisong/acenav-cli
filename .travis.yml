@@ -3,17 +3,11 @@ jobs:
   include:
     - name: "Python 3.8.0 on Bionic Beaver Linux"
       dist: bionic
+      arch: arm64
       python: 3.8 # this works for Linux but is ignored on macOS or Windows
-    - name: "Python 3.8.0 on Windows"
-      os: windows # Windows 10.0.17134 N/A Build 17134
-      language: shell # 'language: python' is an error on Travis CI Windows
-      before_install:
-        - choco install python --version 3.8.0
-        - python -m pip install --upgrade pip
-      env: PATH=/c/Python38:/c/Python38/Scripts:$PATH
 branches:
   only:
-    - develop
+    - fix-mac-detect
 
 install:
   - pip3 install --upgrade pip # all three OSes agree about 'pip3'
@@ -22,8 +16,4 @@ install:
 
 script:
   - pyinstaller build.spec
-  - if [[ ${TRAVIS_OS_NAME} == "windows" ]]; then
-      python ./tools/ci_notify.py;
-    else
-      python3 ./tools/ci_notify.py;
-    fi
+  - python3 ./tools/ci_notify.py
