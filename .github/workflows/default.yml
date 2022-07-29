@@ -2,7 +2,7 @@ name: default-actions
 on:
   push:
     branches:
-      - actions
+      - develop
 
 jobs:
   job1:
