@@ -5,6 +5,9 @@
 	"userPacketsTypeList": ["s1", "gN", "iN", "s2", "o1", "hG", "gB", "uB", "sC"],
 	"logCmd": ["UNLOGALL\r\n", "LOG BESTVELA ONTIME 1\r\n", "LOG BESTPOSA ONTIME 1\r\n",
 	"LOG GPGGA ONTIME 1\r\n", "LOG HEADINGA ONTIME 1\r\n"],
+    "logCmdRAW":["UNLOGALL\r\n", "LOG BESTVELA ONTIME 1\r\n", "LOG BESTXYZA ONTIME 1\r\n", "LOG BESTPOSA ONTIME 1\r\n",
+	"LOG GPGGA ONTIME 1\r\n", "LOG HEADINGA ONTIME 1\r\n", "LOG BESTPOSB ONTIME 1\r\n", "LOG BESTVELB ONTIME 1\r\n", "LOG BESTXYZB ONTIME 1\r\n", "OBSVMB COM1 1\r\n", "OBSVHB COM1 1\r\n",
+	"LOG RANGEB ONTIME 1\r\n", "LOG RANGEHB ONTIME 1\r\n", "LOG GALEPHEMERISB ONTIME 30\r\n", "LOG BD2EPHEMB ONTIME 30\r\n", "LOG GPSEPHEMB ONTIME 30\r\n", "LOG GLOEPHEMERISB ONTIME 30\r\n"],
     "initial":{
         "useDefaultUart": 0,
         "uart":[

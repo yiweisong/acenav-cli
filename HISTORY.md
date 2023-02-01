@@ -1,13 +1,41 @@
 # CHANGELOG
 
 ---
-## 2.6.6， 05/17/2022
+## 2.6.6， 09/23/2022
+
 - [INS401] The reply message 0xcc01 can't be received after the "JS" command is executed.
 - [INS401] GPZDA messages are saved to log, compatible with Sta9100 and Mosaic.
 - [INS401] optimized the firmware upgradation function and ethernet connection
 - [INS401] Support Sta9100 upgradation of the new bootloader and is compatible with the old bootloader.
+- [INS401] filter invalid MAC address
+- [INS401] Updated the function of obtaining the botloader version number
+- [INS401] Ping messages are compatible with old and new versions with different delimiters
+- [INS401] Ethernet cache queue increases
+- [INS401] rtk and ins firmware upgrade, erase flash delay time update
+- [INS401] After imu boot upgradation, the IMU fails to switch to boot because the baud rate of the IMU serial port 
+is changed.
+- [INS401] The default firmware upgrades include RTK, INS, and STA9100 SDK.
+- [INS401] The sta9100 upgrade improve
+- [INS401] optimized the problem which is getting ins401 configuration parameters messages timeout
+- [INS401] update the delay for jumping to the bootloader during the upgraded firmware
+- [INS401C] canfd python env issue and canfd set lever issue
+- [BEIDOU] modify beidou config file, add binary commands
+- [BEIDOU] log unico raw data and update beidou.json
+- [INS401] Ethernet cache queue increases
+- [INS401] Updated the function of obtaining the botloader version number
+- [INS401] optimized the problem which is getting ins401 configuration parameters messages timeout
+- [INS401] update the delay for jumping to the bootloader during the upgraded firmware
+- [INS401] After Failed to send the IMU "JI" command occasionally, add system reset, Ethernet reconnection, and IMU "JI" command resend functions
+- [INS401] Supports multiple Spaces and TAB keys to separate firmware upgrade commands
+- [INS401] modify ins401.json file: change offset of INS_PitchAngle  INS_RollAngle INS_HeadingAngle to -360 from -250
+- [INS402] support ins402 firmware fully upgrade, contains a default list  of the modules which are  rtk, ins, sdk and sdk_2.
+- [INS402] support the firmware upgrade of a single optional module
+- [INS402] Add ins402 NHC switch parameter configuration
+- [INS402] Optimized the sta9100 firmware upgrade
+- [INS401] fix other bugs
 
 ## 2.6.5， 04/11/2022
+
 - [INS401] Support firmware upgrade after completion, automatically connect and log
 - [INS401] After the IMU firmware is upgraded, the IMU is displayed in the bootloader, the solution is system (including IMU) reset of ins401 Unit
 - [INS401] The serial port baud rate of STA9100 SDK firmware upgraded is compatible with 230400bps and 115200, which is distinguished by  the firmware version of the 0xcc01 message
