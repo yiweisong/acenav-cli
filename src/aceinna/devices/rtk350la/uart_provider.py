@@ -14,6 +14,10 @@ from ...framework.utils import (
 )
 from ...framework.utils.print import print_red
 from ..parsers.rtk330l_field_parser import encode_value, get_value_len
+from ...framework.context import APP_CONTEXT
+from ...framework.utils.print import (print_green, print_yellow, print_red)
+import threading
+import os
 
 class Provider(RTKProviderBase):
     '''
@@ -107,7 +111,6 @@ class Provider(RTKProviderBase):
 
                 current_group.append(
                     {'paramId': parameter['paramId'], 'value': parameter['value'], 'type': exist_parameter['type']})
-
         for group in grouped_parameters.values():
             message_bytes = []
             for parameter in group:
@@ -124,10 +127,11 @@ class Provider(RTKProviderBase):
                 )
                 # print('parameter type {0}, value {1}'.format(
                 #     parameter['type'], parameter['value']))
-            # result = self.set_param(parameter)
+
             command_line = helper.build_packet(
                 'uB', message_bytes)
-
+            # hex_command = [hex(ele) for ele in command_line ]
+            # print(hex_command)
             result = yield self._message_center.build(command=command_line)
 
             packet_type = result['packet_type']
@@ -223,6 +227,114 @@ class Provider(RTKProviderBase):
     # override
     def build_worker(self, rule, content):
         pass
+
+
+    def after_setup(self):
+        local_time = time.localtime()
+        formatted_dir_time = time.strftime("%Y%m%d_%H%M%S", local_time)
+        formatted_file_time = time.strftime("%Y_%m_%d_%H_%M_%S", local_time)
+        debug_port = ''
+        rtcm_port = ''
+        set_user_para = self.cli_options and self.cli_options.set_user_para
+
+        # save original baudrate
+        if hasattr(self.communicator, 'serial_port'):
+            self.original_baudrate = self.communicator.serial_port.baudrate
+
+        if self.data_folder is None:
+            raise Exception(
+                'Data folder does not exists, please check if the application has create folder permission')
+
+        try:
+            self.rtk_log_file_name = os.path.join(
+                self.data_folder, '{0}_log_{1}'.format(self.device_category.lower(), formatted_dir_time))
+            os.mkdir(self.rtk_log_file_name)
+        except:
+            raise Exception(
+                'Cannot create log folder, please check if the application has create folder permission')
+
+        # set parameters from predefined parameters
+        if set_user_para:
+            result = self.set_params(
+                self.properties["initial"]["userParameters"])
+            if (result['packetType'] == 'success'):
+                self.save_config()
+
+            # check saved result
+            self.check_predefined_result()
+
+        # start ntrip client
+        if self.properties["initial"].__contains__("ntrip") \
+            and not self.ntrip_client \
+            and not self.is_in_bootloader \
+            and not self.cli_options.use_cli:
+            
+            self.ntrip_rtcm_logf = open(os.path.join(self.rtk_log_file_name, 'ntrip_rtcm_{0}.bin'.format(
+                formatted_file_time)), "wb")
+
+            thead = threading.Thread(target=self.ntrip_client_thread)
+            thead.start()
+
+        try:
+            if (self.properties["initial"]["useDefaultUart"]):
+                user_port_num, port_name = self.build_connected_serial_port_info()
+                if not user_port_num or not port_name:
+                    return False
+                debug_port = port_name + \
+                    str(int(user_port_num) + self.port_index_define['debug'])
+                rtcm_port = port_name + \
+                    str(int(user_port_num) + self.port_index_define['rtcm'])
+            else:
+                for x in self.properties["initial"]["uart"]:
+                    if x['enable'] == 1:
+                        if x['name'] == 'DEBUG':
+                            debug_port = x["value"]
+                        elif x['name'] == 'GNSS':
+                            rtcm_port = x["value"]
+
+            self.user_logf = open(os.path.join(
+                self.rtk_log_file_name, 'user_{0}.bin'.format(formatted_file_time)), "wb")
+
+            if rtcm_port != '':
+                print_green('{0} log GNSS UART {1}'.format(
+                    self.device_category, rtcm_port))
+                self.rtcm_serial_port = serial.Serial(
+                    rtcm_port, '460800', timeout=0.1)
+                if self.rtcm_serial_port.isOpen():
+                    self.rtcm_logf = open(
+                        os.path.join(self.rtk_log_file_name, 'rtcm_rover_{0}.bin'.format(
+                            formatted_file_time)), "wb")
+                    thead = threading.Thread(
+                        target=self.thread_rtcm_port_receiver, args=(self.rtk_log_file_name,))
+                    thead.start()
+
+            if debug_port != '':
+                print_green('{0} log DEBUG UART {1}'.format(
+                    self.device_category, debug_port))
+                self.debug_serial_port = serial.Serial(
+                    debug_port, '460800', timeout=0.1)
+                if self.debug_serial_port.isOpen():
+                    self.debug_logf = open(
+                        os.path.join(self.rtk_log_file_name, 'slave_user_{0}.bin'.format(
+                            formatted_file_time)), "wb")
+                    thead = threading.Thread(
+                        target=self.thread_debug_port_receiver, args=(self.rtk_log_file_name,))
+                    thead.start()
+
+            self.save_device_info()
+        except Exception as ex:
+            if self.debug_serial_port is not None:
+                if self.debug_serial_port.isOpen():
+                    self.debug_serial_port.close()
+            if self.rtcm_serial_port is not None:
+                if self.rtcm_serial_port.isOpen():
+                    self.rtcm_serial_port.close()
+            self.debug_serial_port = None
+            self.rtcm_serial_port = None
+            APP_CONTEXT.get_logger().logger.error(ex)
+            print_red(
+                'Can not log GNSS UART or DEBUG UART, pls check uart driver and connection!')
+            return False
 
     # command list
     # use base methods
