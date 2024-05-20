@@ -1,4 +1,6 @@
 import struct
+import binascii
+from typing import List
 from .event_base import EventBase
 
 
@@ -107,6 +109,17 @@ class RTCMPacket:
         #     print(crc_table_value, crc_value, self._raw_data_bytes[-3:])
         return crc_table_value == crc_value
 
+    def cut_off(self, packets_to_cut:List[int]):
+        read_index = 0
+        msg_type = self._payload_bytes[read_index:read_index+2]
+        #hex_msg_type = binascii.hexlify(bytes(msg_type)).decode()
+        msg_type_id = ((msg_type[0]<<8)+msg_type[1])>>4
+
+        if msg_type_id in packets_to_cut:
+            return []
+
+        return self._raw_data_bytes
+
     def get_raw(self):
         return self._raw_data_bytes
 
@@ -119,9 +132,13 @@ class RTCMParser(EventBase):
     found_header_count = 0
     crc_passed_count = 0
     crc_failed_count = 0
+    packet_types_to_ignore = []
 
     def __init__(self):
         super(RTCMParser, self).__init__()
+
+    def set_ignore_packets(self, packet_types:List[int]):
+        self.packet_types_to_ignore = packet_types
 
     def receive(self, buf: bytes):
         ''' Recevie a byte array, and emit the parsed data
@@ -186,7 +203,12 @@ class RTCMParser(EventBase):
 
                     if self.current_analysis_status == ANALYSIS_STATUS.CRC_PASSED:
                         self.crc_passed_count+=1
-                        packets.append(self.current_packet.get_raw())
+                        if len(self.packet_types_to_ignore)>0:
+                            cut_off_result = self.current_packet.cut_off(self.packet_types_to_ignore)
+                            if len(cut_off_result)>0:
+                                packets.append(cut_off_result)
+                        else:
+                            packets.append(self.current_packet.get_raw())
                         self.current_analysis_status = ANALYSIS_STATUS.INIT
                         self.read_index = 0
                     continue

@@ -33,6 +33,9 @@ class NTRIPClient(EventBase):
             elif x['name'] == 'password':
                 self.password = x["value"]
 
+    def set_ignore_packets(self, packet_types):
+        self.parser.set_ignore_packets(packet_types)
+
     def run(self):
         APP_CONTEXT.get_print_logger().info('NTRIP run..')
         while True:
